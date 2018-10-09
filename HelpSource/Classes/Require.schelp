@@ -35,6 +35,12 @@ might return a global mixer object specified in mixer.scd. It will return a cach
 METHOD:: reset
 Reset the cache of Require'd objects. This will cause all Require calls to re-load the scd's the next time they are run.
 
+METHOD:: addPath
+Add another directory where modules can live.
+
+ARGUMENT:: path
+A string for the path. Can be a relative path, or a full path.
+
 EXAMPLES::
 
 code::
