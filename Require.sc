@@ -17,6 +17,12 @@ RequiredFile {
 Require {
 	classvar <requireTable;
 
+	classvar pathDirs;
+
+	*addPath{|path|
+		pathDirs = pathDirs.add(path.standardizePath);
+	}
+
 	*test {
 		UnitTestScript("Require",
 			Require.filenameSymbol.asString.dirname +/+ "Test" +/+ "Require_unittest.scd").runScript();
@@ -24,6 +30,7 @@ Require {
 
 	*initClass {
 		requireTable = IdentityDictionary();
+		pathDirs = [];
 	}
 
 	*reset {
@@ -93,18 +100,41 @@ Require {
 			paths = this.pathMatch(this.resolveRelative(identifier, relativeTo));
 		};
 
+		// Then look in the modules directory
+		pathDirs.do{|moduleDir|
+			if (paths.isEmpty() && (identifier[0] != ".")) {
+				identifier = moduleDir +/+ identifier;
+				paths=[identifier];
+			};
+
+			// Then relative with implicit extension
+			// Then relative with implicit ./
+			if (paths.isEmpty() && identifier.endsWith(".scd").not) {
+				identifier = moduleDir +/+ identifier ++ ".scd";
+				paths=[identifier];
+			};
+		};
+
 		^paths;
 	}
 
 	*require {
 		arg identifier, cmdPeriod = false, always = true;
 		var paths, results, caller;
-		var relativePath = thisProcess.nowExecutingPath ? "~";
+/*		var relativePath = thisProcess.nowExecutingPath ? "~";
 		relativePath = relativePath.asString;
 		if (relativePath.isFile) {
 			relativePath = relativePath.dirname;
-		};
+		};*/
 
+		var relativePath;
+
+		if(thisProcess.nowExecutingPath.notNil){
+			relativePath = PathName(thisProcess.nowExecutingPath).fullPath;
+		}{
+			relativePath = "~";
+		};
+		relativePath.postln;
 		paths = this.resolvePaths(identifier, relativePath);
 
 		if (paths.isEmpty) {
